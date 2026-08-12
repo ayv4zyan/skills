@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ship Reviewed Implementation"
+  short_description: "Choose workspace, review count, models, and ship"
+  default_prompt: "Use $ship-reviewed-implementation for this request, ask me to choose the workspace, review-pass count, and phase models with reasoning effort, then implement, review, and ship it to green CI."
+policy:
+  allow_implicit_invocation: false
