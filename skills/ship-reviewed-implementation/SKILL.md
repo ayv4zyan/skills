@@ -16,8 +16,15 @@ Advance only through each **gate**.
 Ask one question per turn, in this order, and wait after each. Append “Answer
 with both, for example: GPT-5.6 Sol Medium.” to every model question:
 
-1. **Workspace:** “Where should the implementation run: the current checkout, a
-   new branch in this worktree, or a new branch in a separate worktree?”
+1. **Workspace:** Ask exactly:
+
+   ```text
+   Where should the implementation run?
+
+   1) The current checkout
+   2) A new branch in this worktree
+   3) A new branch in a separate worktree
+   ```
 2. **Review count:** “How many additional independent code-review passes should
    run? Answer with a non-negative whole number; 0 means none.”
 3. **Implementation:** “What model and reasoning effort should handle
