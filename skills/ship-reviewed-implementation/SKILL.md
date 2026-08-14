@@ -13,28 +13,30 @@ Advance only through each **gate**.
 
 ## Preflight
 
-Ask one question per turn, in this order, and wait after each. Append “Answer
-with both, for example: GPT-5.6 Sol Medium.” to every model question:
+Send this block exactly, then wait for one reply:
 
-1. **Workspace:** Ask exactly:
+```text
+Answer all items in one reply, by number or in order.
 
-   ```text
-   Where should the implementation run?
-
+1. Where should the implementation run?
    1) The current checkout
    2) A new branch in this worktree
    3) A new branch in a separate worktree
-   ```
-2. **Review count:** “How many additional independent code-review passes should
-   run? Answer with a non-negative whole number; 0 means none.”
-3. **Implementation:** “What model and reasoning effort should handle
-   implementation?”
-4. **Review, only if N > 0:** “What model and reasoning effort should handle
-   every additional code-review pass?”
-5. **Delivery:** “What model and reasoning effort should handle final validation,
-   PR publishing, and CI follow-through?”
 
-After the workspace answer, discover the default **base** branch and inspect the
+2. How many additional independent code-review passes should run? Answer with a non-negative whole number; 0 means none.
+
+3. What model and reasoning effort should handle each pass? Answer with both, for example: GPT-5.6 Sol Medium.
+   3.1 Implementation
+   3.2 Every additional code-review pass (skip if question 2 is 0)
+   3.3 Delivery (final validation, PR publishing, and CI follow-through)
+```
+
+Answers map as: (1) workspace, (2) review count **N**, (3.1) implementation
+model and effort, (3.2) review model and effort when N > 0, (3.3) delivery
+model and effort. Accept one reply by number or in listed order. A single
+answer to 3 applies to every applicable 3.x.
+
+After a workspace answer, discover the default **base** branch and inspect the
 checkout read-only:
 
 - **Current checkout:** retain its worktree and branch; require a safe, non-base
@@ -43,10 +45,13 @@ checkout read-only:
 - **Separate worktree:** create a dedicated branch and worktree and use it for
   every pass.
 
-Repeat an unsafe or unshippable workspace answer. Require **N** to be an integer
-at least 0; it counts reviews beyond `$implement`'s built-in review. Skip
-question 4 when N = 0. Accept human-friendly model spelling, canonicalize it,
-and runtime-validate every model/effort pair; explain and repeat invalid answers.
+When any answer is missing, unsafe, unshippable, or invalid, explain and re-send
+only those items with their original numbers, then wait. When re-sending any of
+3.1–3.3, include question 3. Require **N** to be an integer at least 0; it
+counts reviews beyond `$implement`'s built-in review. Question 3.2 applies only
+when N > 0; a four-answer in-order reply is then workspace, N, implementation,
+delivery. Accept human-friendly model spelling, canonicalize it, and
+runtime-validate every model/effort pair.
 
 Let **T = N + 2**. Substitute numbers in every pass announcement, status, and
 report heading using:
