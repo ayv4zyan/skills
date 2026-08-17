@@ -7,9 +7,9 @@ disable-model-invocation: true
 # Reviewed delivery
 
 Orchestrate one implementation, **N** independent cold reviews, and one delivery
-pass. Give each pass a fresh top-level agent; agents nested by invoked skills do
-not count. After preflight, the parent only dispatches, waits, and reports.
-Advance only through each **gate**.
+pass. After preflight, the parent only dispatches, waits, and reports. Each
+dispatch is a fresh top-level agent; agents nested by invoked skills do not
+count. Advance only through each **gate**.
 
 ## Preflight
 
@@ -76,8 +76,8 @@ conflicts; ask only when missing information would materially change the result.
 
 Keep every pass in the chosen checkout on one non-base branch; the base is
 read-only comparison and PR target. Preserve unrelated user work and block
-mutation in an unsafe worktree. Run sequentially; retire each agent after its
-gate.
+mutation in an unsafe worktree. Run sequentially; retire each agent when its
+dispatch completes.
 
 ## Implementation
 
@@ -101,24 +101,28 @@ context from its dispatch, current code, and the full base-to-branch diff.
 
 For k = 1…N, announce `Pass k+1/T — Review k/N`, then:
 
-1. Spawn a review agent with the selected model and effort. Have it run
+1. Spawn a review agent with the selected review model and effort. Have it run
    `$code-review` on the entire branch against the base. Require Standards and
    Spec coverage of every requirement and changed file: correctness,
    regressions, completeness, edge cases, architecture, relevant security,
    reliability, and test gaps.
 2. Require evidence for actionable findings. Wait, then have the same agent
    verify each against primary sources and observed behavior.
-3. Have it fix every confirmed finding, using `$tdd` where appropriate; update
-   tests, validate, and commit. Reserve `$implement` for implementation.
-4. Classify every finding as **fixed** or **rejected**, with evidence. With no
-   confirmed findings, leave the tree unchanged and create no commit.
+3. Have it classify every finding as **confirmed** or **rejected**, with
+   evidence, and report that disposition. Wait for the report. The review
+   agent leaves the tree unchanged.
+4. When confirmed findings exist, spawn an implementation agent with the
+   implementation model and effort. Send it the confirmed findings as the work.
+   Require it to use `$implement` for those findings, including suitable tests,
+   validation, built-in review, and commit.
 
 Every requested review remains mandatory when earlier reviews find or change
 nothing. N = 0 creates no review agents.
 
 **Gate, each review:** both axes cover the full branch; every finding has an
-evidenced disposition; confirmed findings are fixed and committed; relevant
-validation passes; findings, dispositions, commits, and validation are reported.
+evidenced disposition; confirmed findings are applied and committed by the
+implementation agent; relevant validation passes; findings, dispositions,
+commits, and validation are reported.
 
 ## Delivery
 
