@@ -1,0 +1,4 @@
+interface:
+  display_name: "RT-PR"
+  short_description: "Commit and publish existing changes only"
+  default_prompt: "Use $rt-pr to commit and publish only the existing task-related changes."
