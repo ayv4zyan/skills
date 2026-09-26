@@ -26,6 +26,14 @@ background synchronization solely for a speculative speedup. Preserve existing
 data freshness guarantees. First remove duplicate computation, redundant requests,
 and unnecessary updates at their source.
 
+## Fix clipped shadows
+
+Inspect shadows and focus rings for unintended clipping, especially at scroll
+container edges and inside overflow or containment wrappers. Fix the responsible
+layout or reserve enough space for the shadow while preserving scrolling and
+intentional content clipping. Verify the first and last items at both scroll ends,
+including hover, focus, and changed motion states at representative viewport sizes.
+
 ## Polish motion
 
 - Read and use `transitions-polish` for existing transitions. Match timing, easing,
