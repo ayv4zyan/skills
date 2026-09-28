@@ -1,152 +1,62 @@
 ---
 name: rt-improve
-description: Improve an existing app by polishing transitions, removing unnecessary renders, simplifying code, and selectively applying TanStack Virtual. Invoke explicitly for an improvement pass that prioritizes readability, responsiveness, and fewer edge cases.
+description: Simplify existing code, improve performance, and refine UI motion while preserving functional behavior. Use when explicitly asked to apply rt-improve to a page, component, module, or flow; the focus is cleanup and refinement, not new features or redesign.
 ---
 
 # RT Improve
 
-Make the existing app smoother, faster, and easier to understand while reducing
-the number of states and edge cases its code must handle. Preserve intended
-behavior and the app's design language. Run only when explicitly invoked by the user.
+Make the requested code easier to understand, maintain, and reason about. Improve performance primarily by doing less work. A worthwhile cleanup reduces the number of states, dependencies, subscriptions, conversions, or lifecycle rules a maintainer must understand.
 
-## Choose improvements by their total cost
+The user's preference: **simplification that reduces edge cases takes priority over clever optimization**. A small speed gain is not worth a cache, synchronization mechanism, or new set of failure modes. Preserve functional behavior and interaction semantics; scoped motion refinements described below are part of this skill. Other behavior changes require an explicit request or a demonstrated problem within scope.
 
-Inspect the requested area, its state and data flow, existing motion, and project
-conventions. If the request covers the whole app, identify its main interactions
-and expensive paths before choosing changes. Implement worthwhile improvements
-within the user's scope; do not force every technique into every app.
+## Review the actual work
 
-For each candidate, identify the concrete problem, the simplest fix, and any new
-state, lifecycle, or synchronization work it would create. Prefer changes that
-remove work or make invalid states impossible. Reject optimizations whose benefit
-depends on extra edge cases or ongoing coordination.
+Read repository instructions, inspect existing changes, and trace the target's data and state flow before editing. Follow the project's architecture and public APIs; preserve unrelated work. Inspect dependencies enough to understand what a hook or helper actually starts, subscribes to, or updates.
 
-Do not introduce application caches, mirrored data, invalidation schemes, or
-background synchronization solely for a speculative speedup. Preserve existing
-data freshness guarantees. First remove duplicate computation, redundant requests,
-and unnecessary updates at their source.
+Look for concrete sources of complexity or wasted work:
 
-## Fix clipped shadows
+- Broad hooks that fetch unrelated data or initialize unused state.
+- Subscriptions placed above the components that need their updates.
+- Copied server data, stored derived values, and effects that synchronize avoidable duplicate state.
+- Repeated serialization/parsing, unnecessary allocations that break stable props, and duplicated configuration.
+- No-op handlers, redundant wrappers, stale branches, unsafe casts, and abstractions with no current benefit.
 
-Inspect shadows and focus rings for unintended clipping, especially at scroll
-container edges and inside overflow or containment wrappers. Fix the responsible
-layout or reserve enough space for the shadow while preserving scrolling and
-intentional content clipping. Verify the first and last items at both scroll ends,
-including hover, focus, and changed motion states at representative viewport sizes.
+Distinguish unnecessary machinery from safeguards that preserve correctness. Understand loading, save, reset, error, and asynchronous ordering behavior before removing guards or effects.
 
-## Polish motion
+For dialogs and other dismissible UI in scope, trace the supported close paths: cancel, Escape, backdrop dismissal, successful submission, and failure. Check which callback owns dismissal and whether it clears state or unmounts the component before an existing exit animation finishes. Check that state-dependent classes preserve base classes and activate the intended styles. Treat broken lifecycle behavior as a scoped correctness issue; preserve intentional close timing and error semantics.
 
-- Read and use `transitions-polish` for existing transitions. Match timing, easing,
-  distance, scale, and blur to the interaction's purpose.
-- Read and use `transitions-dev` to introduce transitions when they improve
-  feedback, continuity, or understanding. Load only the relevant recipes. Skip
-  decorative motion that adds distraction, latency, or orchestration complexity.
-- Resolve these skills from the installed skill catalog rather than hardcoding
-  machine-specific paths. If either is unavailable, report the missing dependency
-  and continue independent improvements; do not claim to have used it.
-- Reuse existing motion tokens and component lifecycles. Keep reduced-motion
-  support, keyboard interaction, and focus behavior intact. Verify rapid repeated
-  interaction and interrupted open/close sequences for changed transitions.
-- Prefer CSS and existing state hooks. Avoid adding timers or parallel animation
-  state when the same result fits the component's current lifecycle. Choose a
-  simpler recipe when integration would create extra coordination.
+## Prefer structural simplification
 
-Follow the user's existing authorization for implementation; an improvement
-request should result in changes, while a review-only request should remain a
-review. Honor explicitly requested approval checkpoints.
+Remove unused work first. Narrow dependencies and subscriptions, keep state close to its owner, and use the project's existing data and form primitives. Extract a component when it gives updates a smaller scope or establishes a useful ownership boundary. Keep single-use logic local; extract shared code only for real reuse.
 
-## Remove unnecessary renders
+Use direct, typed representations. Avoid encoding values into strings and decoding them just to pass data between layers. Reuse a validated public helper when it replaces duplicated logic or unsafe assertions. Retain stable constants where useful, but do not pursue fewer lines at the expense of clarity.
 
-Trace what triggers updates and which components actually need the changing
-data. Use the project's profiler or targeted instrumentation when available to
-identify costly repeated work. Render count alone is not a performance result;
-distinguish development checks from behavior that affects users.
+Optimize only a concrete source of work. Do not blanket-add memoization, callback wrappers, global stores, or generic frameworks. Do not introduce caches, invalidation rules, debouncing, queues, retries, speculative fallbacks, or compatibility layers merely to claim a performance improvement. If a proposed optimization needs extra coordination or new behavioral rules, prefer leaving it out unless the task specifically requires it and its benefit justifies that complexity.
 
-Prefer structural fixes:
+For list-heavy UI, inspect lists, tables, grids, and option menus for excessive mounted elements and establish expected data volumes. Before ruling out virtualization, verify representative volumes using fixtures, API data, or documented limits. If that evidence is unavailable, report virtualization as **unassessed**. A small test fixture or absence of reported slowness does not establish that virtualization is unnecessary. Distinguish code inspection, browser verification, and measured performance in the final report.
 
-- Keep transient state close to the components that use it.
-- Remove redundant derived state and effects that copy or synchronize values
-  already available during rendering.
-- Narrow subscriptions and context consumers to the data they need, using the
-  project's existing mechanisms.
-- Remove redundant state writes and effect chains. Keep stable item identities
-  and avoid accidental remounts.
-- Move invariant work outside render and avoid repeating expensive transforms
-  for unchanged inputs when the dependency relationship is simple and explicit.
+Consider virtualization when realistic data volumes show rendering or scrolling costs that justify the added complexity. Reuse existing virtualized components first; prefer TanStack Virtual where it fits the project. Preserve stable item identity, keyboard navigation, focus, selection, editing state, and scroll behavior. Avoid arbitrary item-count rules across unrelated components. Virtualization limits rendered elements; it does not itself reduce fetching or filtering work. Verify behavior with representative data and distinguish reduced mounted elements from measured performance gains.
 
-Use memoization only for an identified cost and a boundary where it can actually
-prevent work. Respect existing compiler and framework optimizations. Avoid blanket
-`memo`, `useMemo`, and `useCallback`, custom equality checks that can hide updates,
-suppressed dependency warnings, and refs used to conceal reactive data. Verify
-that changes still propagate correctly; fewer renders must not mean stale UI.
+Preserve necessary reset and persistence semantics. Do not change save timing, request ordering, offline behavior, or error handling incidentally during a refactor. Keep proven protections even when they make the implementation longer. Fix demonstrated bugs in scope with the smallest coherent change; avoid accumulating hypothetical edge-case handling.
 
-## Virtualize only when it pays off
+## Refine motion where it helps
 
-Consider TanStack Virtual for lists, tables, or grids where representative data
-shows that mounting or updating many offscreen items is a meaningful cost.
-Check existing virtualization first. Small collections and cheap rendering do
-not justify a new dependency by themselves.
+For UI targets, assess existing transitions and opportunities for useful new motion. Read the available `transitions-dev` and `transitions-polish` skills, using `transitions-polish` to refine existing motion and `transitions-dev` to introduce transitions that improve feedback, continuity, or clarity. Read only relevant transition references. Keep the assessment and changes within the requested target; skip motion work for non-UI tasks. If a companion skill is unavailable, disclose that limitation and continue the independent cleanup.
 
-Before adding it, establish a representative baseline and inspect the installed
-framework and package versions. Use current official TanStack Virtual documentation
-for the appropriate adapter and APIs. Reuse the existing data source and loading
-model; virtualization should not require a second data store or cache.
+For implementation requests, apply justified motion improvements as part of the requested work; review-only requests remain review-only. Reuse existing motion tokens and primitives, matching tokens by purpose rather than numerical proximity. Preserve reduced-motion support, keyboard and focus behavior, and immediate interaction feedback. Avoid decorative motion, unnecessary orchestration, and replaying entrance animations as virtualized rows remount. Leave effective transitions alone when changing them has no clear benefit.
 
-Account for the features the collection actually supports: stable item keys,
-variable sizes, resizing, filtering and sorting, keyboard navigation, focus,
-selection or editing, and scroll position. If unmounted content would break
-required accessibility, browser find, printing, or another existing capability,
-prefer a simpler improvement unless the behavior can be preserved without adding
-fragile workarounds. Do not build speculative infrastructure for absent features.
+Compare the target's actual entrance and exit behavior with nearby components serving the same purpose. Where an established pattern fits, reuse its timing, easing, movement, and reduced-motion behavior. Check visual consistency as well as functional completion; an animation running successfully does not establish that it fits the surrounding UI. Preserve intentional differences and keep changes within the requested target.
 
-Compare the same interaction and data before and after. Keep virtualization only
-when its benefit is meaningful and its integration satisfies the simplicity goal.
+Verify changed motion in the browser when available, including rapid reversal or dismissal and reduced-motion behavior. Report any visual verification that could not be performed.
 
-## Clean and unslop the code
+## Verify and finish
 
-Remove dead code, redundant branches, duplicated sources of truth, needless
-wrappers, and abstractions that obscure straightforward logic. Verify usage before
-deleting exports or behavior. Use clear names, direct control flow, and the
-project's established patterns.
+Implement the cleanup, rather than stopping at a review, unless the user requested review only. Keep the scope tied to the requested target; do not turn it into a migration, visual redesign, or dependency upgrade.
 
-Consolidate duplication when it expresses the same rule; avoid generalizing code
-that merely looks similar. Remove comments that restate obvious code and retain
-those explaining constraints or decisions. Preserve validation, error handling,
-and intentional behavior. Avoid unrelated rewrites and dependency churn.
+Run the checks required by the repository and appropriate to the changes. For state or persistence changes, use focused behavioral regressions for relevant loading, editing, saving, and reset behavior. Use existing flow tests where available. Do not add tests that merely reproduce implementation details or elaborate test infrastructure for trivial edits. Keep required coverage targets intact when moving or deleting helpers.
 
-## Verify and report
+When cleanup changes UI callbacks, state ownership, or dismissal, verify the complete affected interaction through its actual caller. Hook or mutation tests alone do not establish that the visible flow works; verify dismissal and reopening where relevant, and do not infer one dialog's behavior from another dialog that uses different wiring.
 
-Run the project's relevant checks and exercise the interactions affected by the
-changes. Add focused regression coverage when changing state, identity,
-subscriptions, or virtualization behavior creates a concrete regression risk;
-do not add tests that merely mirror implementation or cosmetic edits.
+Review the final diff for accidental behavior changes and abstractions that cost more than they save. Stop when the scoped cleanup is complete and relevant checks pass; do not keep inventing optimizations.
 
-For performance changes, compare representative behavior under the same
-conditions. Report measured improvements only when measured; distinguish structural
-reductions in work from unverified speed claims. If runtime or profiling access
-is unavailable, state that limitation and avoid speculative complexity.
-
-Finish with a concise account of what changed, why it is simpler or better, what
-was verified, and any material limitation. Briefly explain skipped techniques
-when relevant, such as virtualization offering no useful gain for the current list.
-
-## Suggest skill improvements only for material gaps
-
-When the user asks what this pass teaches us about improving `rt-improve`, use
-evidence from the actual work. Recommend a change only when it addresses an
-important, reusable gap that would materially improve future decisions or prevent
-a significant failure. There is no quota for suggestions.
-
-Check the current instructions and relevant transition skills first. If following
-an existing rule would have covered the issue, treat it as an execution mistake,
-not a reason to add another rule. Exclude minor preferences, speculative risks,
-project-specific details, and extra examples of principles already covered.
-
-For each qualifying suggestion, briefly explain what happened, why the existing
-guidance was insufficient, and the smallest proposed edit and its expected benefit.
-Prefer clarifying, replacing, or removing instructions over appending more rules.
-Keep project-specific lessons in project documentation.
-
-If nothing meets this bar, say: "No important changes to rt-improve suggested by
-this pass." A request for suggestions does not authorize editing the skill;
-present the proposals and apply them only when the user requests it.
+Report the concrete simplifications, the unnecessary work removed, and verification results. Distinguish structural improvements from measured performance gains; do not invent render counts, speedups, or benchmarks. State any remaining limitations plainly.

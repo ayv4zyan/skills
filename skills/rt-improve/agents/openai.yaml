@@ -1,6 +1,6 @@
 interface:
   display_name: "RT Improve"
-  short_description: "Polish motion, reduce renders, simplify app code"
-  default_prompt: "Use $rt-improve to improve this app: polish transitions, remove unnecessary renders, simplify code, and add TanStack Virtual only where the performance gain justifies it without adding edge cases."
+  short_description: "Simplify code and performance without more edge cases"
+  default_prompt: "Use $rt-improve to clean up this code, reduce unnecessary work, and preserve behavior without adding complexity."
 policy:
   allow_implicit_invocation: false
