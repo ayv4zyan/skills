@@ -1,6 +1,6 @@
 ---
 name: rt-summarize
-description: Summarize software issues and changes with defined entities, a high-level user-visible problem, and explicit before/after behavior. Use when explaining a bug or change, especially when asked to define entities first or compare before and after.
+description: Summarize software issues and changes with defined entities, a high-level user-visible problem, and explicit before/after behavior. Use only when the user explicitly invokes rt-summarize.
 ---
 
 # RT Summarize

@@ -22,7 +22,7 @@ npx skills add ayv4zyan/skills --skill ship-reviewed-implementation --agent code
 
 Explains software issues and changes using **Entities**, **Problem**, **Before**,
 and **After**. Defines interface controls concretely and keeps the problem
-statement at the level of the affected user capability. Invoke with
+statement at the level of the affected user capability. User-invocable only; invoke with
 `$rt-summarize` after installation.
 
 ```bash
