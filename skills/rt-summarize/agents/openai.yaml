@@ -1,0 +1,4 @@
+interface:
+  display_name: "RT Summarize"
+  short_description: "Define entities and explain problems before and after"
+  default_prompt: "Use $rt-summarize to explain this issue or change using Entities, Problem, Before, and After."

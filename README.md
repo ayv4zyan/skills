@@ -18,6 +18,17 @@ npx skills add ayv4zyan/skills --skill ship-reviewed-implementation --agent code
 
 ## Available skills
 
+### `rt-summarize`
+
+Explains software issues and changes using **Entities**, **Problem**, **Before**,
+and **After**. Defines interface controls concretely and keeps the problem
+statement at the level of the affected user capability. Invoke with
+`$rt-summarize` after installation.
+
+```bash
+npx skills add ayv4zyan/skills --skill rt-summarize --agent codex --global --yes
+```
+
 ### `rt-improve`
 
 Simplifies existing code, reduces unnecessary work, and refines useful UI motion
