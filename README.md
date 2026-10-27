@@ -18,6 +18,17 @@ npx skills add ayv4zyan/skills --skill ship-reviewed-implementation --agent code
 
 ## Available skills
 
+### `full-send`
+
+Model-invokable for an operative standalone sentence such as `Change button
+color. full send.` Runs the reviewed implementation and delivery cycle, merging
+the PR only if the PR skill classifies its merge danger as two-way.
+
+### `full-stop`
+
+Model-invokable for an operative standalone sentence such as `Change button
+color. full stop.` Runs the same cycle through a PR; only the merge is omitted.
+
 ### `rt-summarize`
 
 Explains software issues and changes using **Entities**, **Problem**, **Before**,
