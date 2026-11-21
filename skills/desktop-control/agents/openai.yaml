@@ -1,0 +1,5 @@
+interface:
+  display_name: "Desktop Control"
+  short_description: "Drive the real Hyprland desktop: pointer, keys, screenshots"
+policy:
+  allow_implicit_invocation: true

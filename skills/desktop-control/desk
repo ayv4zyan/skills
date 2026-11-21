@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# desk: drive the real Hyprland desktop (pointer, keys, screenshots). See SKILL.md.
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RUN="${XDG_RUNTIME_DIR:-/tmp}/desk"
+FIFO="$RUN/mouse.fifo"
+mkdir -p "$RUN"
+
+die() { echo "desk: $*" >&2; exit 1; }
+running() { [[ -p "$FIFO" ]] && pgrep -f "vmoused.py $FIFO" >/dev/null; }
+send() { running || die "virtual mouse not running; run: desk start"; echo "$*" > "$FIFO"; sleep 0.15; }
+warp() { hyprctl dispatch "hl.dsp.cursor.move({x=$1,y=$2})" | grep -qx ok || die "cursor move failed"; }
+# Warping alone sends the app no motion event; a 1 px wiggle makes hover and enter happen.
+point() { running || die "virtual mouse not running; run: desk start"; warp "$1" "$2"; sleep 0.1; send move 1 0; send move -1 0; }
+
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+  start)
+    running && { echo "already running"; exit 0; }
+    rm -f "$FIFO"; mkfifo "$FIFO"
+    setsid nohup python3 "$HERE/vmoused.py" "$FIFO" >"$RUN/vmoused.log" 2>&1 &
+    for _ in $(seq 20); do hyprctl devices | grep -q claude-desk-mouse && break; sleep 0.1; done
+    hyprctl devices | grep -q claude-desk-mouse || die "device did not appear; see $RUN/vmoused.log"
+    hyprctl cursorpos | tr -d ' ' > "$RUN/saved-cursor"
+    hyprctl activewindow -j | python3 -c 'import json,sys; print(json.load(sys.stdin).get("address",""))' > "$RUN/saved-window"
+    sleep 0.5; echo "started (cursor and focused window saved)" ;;
+  stop)
+    if running; then echo quit > "$FIFO"; sleep 0.3; fi
+    if [[ -f "$RUN/saved-cursor" ]]; then
+      IFS=, read -r x y < "$RUN/saved-cursor"; warp "$x" "$y"; rm -f "$RUN/saved-cursor"
+    fi
+    if [[ -s "$RUN/saved-window" ]]; then
+      hyprctl dispatch "hl.dsp.focus({window=\"address:$(cat "$RUN/saved-window")\"})" >/dev/null || true
+      rm -f "$RUN/saved-window"
+    fi
+    rm -f "$FIFO"; echo "stopped (cursor and focus restored)" ;;
+  cursor) hyprctl cursorpos ;;
+  move) point "$1" "$2" ;;
+  click)   # click X Y [left|right|middle]
+    point "$1" "$2"; send press "${3:-left}"; send release "${3:-left}" ;;
+  dclick)
+    point "$1" "$2"; send press left; send release left; send press left; send release left ;;
+  drag)    # drag X1 Y1 X2 Y2 [steps]: press, move in steps, release
+    steps="${5:-10}"; point "$1" "$2"; send press left
+    for i in $(seq 1 "$steps"); do
+      warp $(( $1 + ($3 - $1) * i / steps )) $(( $2 + ($4 - $2) * i / steps )); send move 1 0; send move -1 0
+    done
+    send release left ;;
+  wheel)   # wheel X Y up|down N: direction as the app sees it (accounts for natural_scroll)
+    point "$1" "$2"; n="${4:-1}"
+    natural=$(hyprctl getoption input:natural_scroll | awk '/bool|int/ {print $2; exit}')
+    sign=1; [[ "$3" == down ]] && sign=-1
+    [[ "$natural" == true || "$natural" == 1 ]] && sign=$(( -sign ))
+    send wheel $(( sign * n )) ;;
+  key)  wtype "$@" ;;            # e.g. desk key -M ctrl -k z -m ctrl   (keys go to the focused window)
+  type) wtype -- "$*" ;;
+  win)     # win PATTERN -> "x y w h" of the first window whose class or title matches (regex)
+    hyprctl clients -j | python3 -c '
+import json, re, sys
+for c in json.load(sys.stdin):
+    if re.search(sys.argv[1], c["class"] + " " + c["title"]):
+        print(*c["at"], *c["size"]); break
+else:
+    sys.exit("desk: no window matches " + sys.argv[1])' "$1" ;;
+  focus) hyprctl dispatch "hl.dsp.focus({window=\"$1\"})" | grep -qx ok || die "no window matches $1 (the regex must match the whole title)" ;;
+  shot)    # shot FILE [PATTERN]: whole screen, or just the matching window
+    if [[ -n "${2:-}" ]]; then read -r x y w h < <("$0" win "$2"); grim -g "$x,$y ${w}x$h" "$1"; else grim "$1"; fi
+    echo "$1" ;;
+  *) cat <<'USAGE'
+desk start | stop                 create the virtual mouse | remove it (restores cursor and focus)
+desk win PATTERN                  "x y w h" of the first window whose class+title matches the regex
+desk focus 'title:REGEX'|'class:REGEX'   focus a window; REGEX matches the whole string
+desk move X Y                     point at screen coordinates (hover)
+desk click X Y [left|right|middle]
+desk dclick X Y
+desk drag X1 Y1 X2 Y2 [STEPS]
+desk wheel X Y up|down [N]        N notches, direction as the app sees it
+desk key WTYPE-ARGS...            e.g. desk key -M ctrl -k z -m ctrl
+desk type TEXT
+desk shot FILE [PATTERN]          screenshot: whole screen, or the matching window
+desk cursor                       current pointer position
+USAGE
+  ;;
+esac

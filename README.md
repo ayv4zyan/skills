@@ -18,6 +18,19 @@ npx skills add ayv4zyan/skills --skill ship-reviewed-implementation --agent code
 
 ## Available skills
 
+### `desktop-control`
+
+Drives the real Hyprland desktop with genuine input (a virtual mouse on
+`/dev/uinput`, keys through `wtype`, screenshots through `grim`) so an agent can
+verify GUI work in the running app instead of trusting synthetic test events.
+Asks before taking the pointer and restores the cursor and focus afterwards.
+Model-invokable. Needs Hyprland 0.56+, `python3`, `grim`, `wtype` and write
+access to `/dev/uinput`.
+
+```bash
+npx skills add ayv4zyan/skills --skill desktop-control --global --yes
+```
+
 ### `full-send`
 
 Model-invokable for an operative standalone sentence such as `Change button
